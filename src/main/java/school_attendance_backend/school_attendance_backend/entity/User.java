@@ -18,6 +18,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Getter
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name="type")
 public class User implements UserDetails {
 
     @Id
