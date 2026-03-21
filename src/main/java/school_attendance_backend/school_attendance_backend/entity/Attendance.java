@@ -2,8 +2,6 @@ package school_attendance_backend.school_attendance_backend.entity;
 
 import jakarta.persistence.*;
 
-import java.util.UUID;
-
 @Entity
 @Table(name = "t_attendances")
 public class Attendance {
