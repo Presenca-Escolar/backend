@@ -3,9 +3,11 @@ package school_attendance_backend.school_attendance_backend.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import school_attendance_backend.school_attendance_backend.dto.AuthDTO;
+import school_attendance_backend.school_attendance_backend.dto.AuthResponseDTO;
 import school_attendance_backend.school_attendance_backend.entity.User;
 import school_attendance_backend.school_attendance_backend.entity.UserRole;
 import school_attendance_backend.school_attendance_backend.repository.UserRepository;
@@ -80,7 +82,8 @@ public class AuthService {
      * @return token JWT gerado para o usuário registrado
      * @throws RuntimeException caso o username já exista no sistema
      */
-    public String register(AuthDTO request) {
+    public AuthResponseDTO register(AuthDTO request) {
+
         if (repository.findByUsername(request.username()).isPresent()) {
             throw new RuntimeException("Username already exists");
         }
@@ -93,9 +96,14 @@ public class AuthService {
 
         repository.save(user);
 
-        return jwtService.generateToken(user);
-    }
+        String token = jwtService.generateToken(user);
 
+        return new AuthResponseDTO(
+                token,
+                user.getUsername(),
+                user.getRole().name()
+        );
+    }
 
     /**
      * Realiza a autenticação de um usuário no sistema.
@@ -108,21 +116,26 @@ public class AuthService {
      *     <li>Retorna o token para o cliente.</li>
      * </ol>
      *
-     * @param request objeto contendo username e password do usuário
+     * @param data contendo username e password do usuário
      * @return token JWT gerado após autenticação bem-sucedida
      */
-    public String login(AuthDTO request) {
+    public AuthResponseDTO login(AuthDTO data){
 
-        authenticationManager.authenticate(
+        Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.username(),
-                        request.password()
+                        data.username(),
+                        data.password()
                 )
         );
 
-        User user = repository.findByUsername(request.username())
-                .orElseThrow();
+        User user = (User) authentication.getPrincipal();
 
-        return jwtService.generateToken(user);
+        String token = jwtService.generateToken(user);
+
+        return new AuthResponseDTO(
+                token,
+                user.getUsername(),
+                user.getRole().name()
+        );
     }
 }

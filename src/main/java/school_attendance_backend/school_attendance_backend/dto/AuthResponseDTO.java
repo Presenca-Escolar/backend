@@ -1,4 +1,8 @@
 package school_attendance_backend.school_attendance_backend.dto;
 
-public class AuthResponseDTO {
+public record AuthResponseDTO (
+        String token,
+        String username,
+        String role
+) {
 }

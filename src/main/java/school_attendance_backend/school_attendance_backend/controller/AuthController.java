@@ -4,10 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import school_attendance_backend.school_attendance_backend.dto.AuthDTO;
+import school_attendance_backend.school_attendance_backend.dto.AuthResponseDTO;
 import school_attendance_backend.school_attendance_backend.service.AuthService;
 
 
@@ -24,6 +23,8 @@ import school_attendance_backend.school_attendance_backend.service.AuthService;
  */
 @RestController
 @Slf4j
+@RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 public class AuthController {
 
     /**
@@ -51,12 +52,16 @@ public class AuthController {
      * Fluxo:
      * 1. Recebe os dados do usuário
      * 2. Chama o service para registrar o usuário
-     * 3. O service retorna um JWT
-     * 4. O JWT é enviado no Header Authorization
-     * 5. O JWT também é enviado no corpo da resposta
+     * 3. O service cria o usuário no banco
+     * 4. O service gera um token JWT
+     * 5. Retorna um AuthResponseDTO contendo:
+     *    - token
+     *    - username
+     *    - role
+     * 6. O token também é enviado no header Authorization
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody AuthDTO data){
+    public ResponseEntity<AuthResponseDTO> register(@RequestBody AuthDTO data){
 
         // Log para registrar tentativa de criação de usuário
         log.info("Register Info: {}", data.username());
@@ -64,21 +69,21 @@ public class AuthController {
         try {
 
             // Chama o service que registra o usuário e gera o token JWT
-            String jwt = authService.register(data);
+            AuthResponseDTO response = authService.register(data);
 
             // Criação do header HTTP
             HttpHeaders headers = new HttpHeaders();
 
             // Adiciona o token JWT no header Authorization
-            headers.add("Authorization", "Bearer " + jwt);
+            headers.add("Authorization", "Bearer " + response.token());
 
             // Retorna resposta HTTP 200 com:
             // - Header Authorization contendo o JWT
-            // - Corpo contendo o JWT
+            // - Corpo contendo o AuthResponseDTO
             return ResponseEntity
                     .ok()
                     .headers(headers)
-                    .body(jwt);
+                    .body(response);
 
         } catch (IllegalArgumentException e){
 
@@ -106,24 +111,24 @@ public class AuthController {
      * 5. Retorna o JWT também no corpo da resposta
      */
     @PostMapping("/login")
-    public ResponseEntity<String> login (@RequestBody AuthDTO data){
+    public ResponseEntity<AuthResponseDTO> login (@RequestBody AuthDTO data){
 
         // Log da tentativa de login
         log.info("Login Info: {}", data.username());
 
         // Chama o service para autenticar o usuário
-        String jwt = authService.login(data);
+        AuthResponseDTO response = authService.login(data);
 
         // Criação do header HTTP
         HttpHeaders headers = new HttpHeaders();
 
         // Adiciona o token no header Authorization
-        headers.add("Authorization", "Bearer " + jwt);
+        headers.add("Authorization", "Bearer " + response.token());
 
         // Retorna resposta HTTP 200 com token
         return ResponseEntity
                 .ok()
                 .headers(headers)
-                .body(jwt);
+                .body(response);
     }
 }
